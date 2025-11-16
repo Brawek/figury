@@ -3,16 +3,24 @@ package myclass.data;
 public class Shape {
     protected String name;
     protected double area;
+    protected String type;
 
-    public Shape(String name) {
+    public Shape(String type, String name) {
+        this.type = type;
         this.name = name;
-        area = 0.0;
+        this.area = 0.0;
     }
 
-    public String getName() {
-        return name;
+    public String getName() { return name; }
+    public double getArea() { return area; }
+    public String getType() { return type; }
+
+    public String toSaveString() {
+        return type + ";" + name;
     }
-    public double getArea() {
-        return area;
+
+    @Override
+    public String toString() {
+        return String.format("%s (%s) - %.2f", name, type, area);
     }
 }
