@@ -1,0 +1,5 @@
+Kwadrat;kwadrat;3.0
+Kwadrat;kwadrat;4.0
+Trójkąt;trojkat;2.0;6.0
+Prostokąt;kostka;2.0;10.0
+Koło;kolo;2.0

@@ -21,6 +21,7 @@ public class Shape {
 
     @Override
     public String toString() {
-        return String.format("%s (%s) - %.2f", name, type, area);
+        return name; // tylko nazwa figury
     }
+
 }

@@ -3,9 +3,6 @@ package myclass.gui;
 import myclass.data.Circle;
 import myclass.data.Square;
 import myclass.data.Triangle;
-// do NOT import myclass.data.Shape or Rectangle here to avoid ambiguity with java.awt
-// we will reference them by full name where needed
-
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
@@ -20,8 +17,8 @@ public class Start extends Frame {
     private Panel lpanel, ppanel;
     private Label labLista, labChoice;
     private List listFig;
+    private Canvas canvas;
 
-    // internal storage - fully qualified to avoid ambiguous 'Shape'
     private java.util.List<myclass.data.Shape> shapes = new ArrayList<>();
 
     public Start(String title) {
@@ -31,6 +28,7 @@ public class Start extends Frame {
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) { dispose(); }
         });
+
         // menu
         menuBar = new MenuBar();
         mBase = new Menu("BAZA");
@@ -42,17 +40,28 @@ public class Start extends Frame {
         menuBar.add(mBase);
         setMenuBar(menuBar);
 
-        // left panel - lista
+        // left panel - lista + canvas
         lpanel = new Panel(new BorderLayout());
         lpanel.setPreferredSize(new Dimension(300, 0));
         lpanel.setBackground(Color.LIGHT_GRAY);
+
         labLista = new Label("Lista figur");
         listFig = new List();
         lpanel.add(labLista, BorderLayout.NORTH);
         lpanel.add(listFig, BorderLayout.CENTER);
+
+        canvas = new Canvas() {
+            public void paint(Graphics g) {
+                drawSelectedShape(g);
+            }
+        };
+        canvas.setSize(300, 200);
+        canvas.setBackground(Color.WHITE);
+        lpanel.add(canvas, BorderLayout.SOUTH);
+
         add(lpanel, BorderLayout.WEST);
 
-        // right panel - wybor i przyciski
+        // right panel
         ppanel = new Panel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(8,8,8,8);
@@ -79,7 +88,7 @@ public class Start extends Frame {
 
         add(ppanel, BorderLayout.CENTER);
 
-        // small floating menu on left like in image
+        // small left menu
         Panel leftMenu = new Panel(new GridLayout(4,1,0,6));
         leftMenu.setPreferredSize(new Dimension(80,120));
         Button mNew = new Button("Nowa");
@@ -94,12 +103,14 @@ public class Start extends Frame {
         btDel.addActionListener(e -> onDelete());
         btInfo.addActionListener(e -> onInfo());
 
+        listFig.addItemListener(e -> canvas.repaint());
+
         itemNew.addActionListener(e -> onNew());
         itemRead.addActionListener(e -> onRead());
         itemSave.addActionListener(e -> onSave());
         itemClose.addActionListener(e -> dispose());
 
-        // same for small left menu
+        // small menu
         mNew.addActionListener(e -> onNew());
         mRead.addActionListener(e -> onRead());
         mSave.addActionListener(e -> onSave());
@@ -112,6 +123,53 @@ public class Start extends Frame {
         listFig.removeAll();
         for (myclass.data.Shape s : shapes) listFig.add(s.toString());
     }
+
+
+    private void drawSelectedShape(Graphics g) {
+        int idx = listFig.getSelectedIndex();
+        g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight()); // czyszczenie tła
+        if (idx < 0) return; // brak wybranej figury
+
+        myclass.data.Shape s = shapes.get(idx);
+
+        int canvasW = canvas.getWidth();
+        int canvasH = canvas.getHeight();
+        int padding = 20; // odstęp od krawędzi
+        g.setColor(Color.BLUE);
+
+        if (s instanceof Square sq) {
+            double side = sq.getSide();
+            double scale = Math.min((canvasW - padding) / side, (canvasH - padding) / side);
+            int size = (int)(side * scale);
+            g.fillRect((canvasW - size)/2, (canvasH - size)/2, size, size);
+
+        } else if (s instanceof myclass.data.Rectangle r) {
+            double wRect = r.getWidth();
+            double hRect = r.getHeight();
+            double scale = Math.min((canvasW - padding) / wRect, (canvasH - padding) / hRect);
+            int w = (int)(wRect * scale);
+            int h = (int)(hRect * scale);
+            g.fillRect((canvasW - w)/2, (canvasH - h)/2, w, h);
+
+        } else if (s instanceof Circle c) {
+            double radius = c.getRadius();
+            double scale = Math.min((canvasW - padding) / (2*radius), (canvasH - padding) / (2*radius));
+            int diameter = (int)(2 * radius * scale);
+            g.fillOval((canvasW - diameter)/2, (canvasH - diameter)/2, diameter, diameter);
+
+        } else if (s instanceof Triangle t) {
+            double base = t.getBase();
+            double height = t.getHeight();
+            double scale = Math.min((canvasW - padding) / base, (canvasH - padding) / height);
+            int b = (int)(base * scale);
+            int h = (int)(height * scale);
+            int[] xPoints = {canvasW/2 - b/2, canvasW/2 + b/2, canvasW/2};
+            int[] yPoints = {canvasH/2 + h/2, canvasH/2 + h/2, canvasH/2 - h/2};
+            g.fillPolygon(xPoints, yPoints, 3);
+        }
+    }
+
+
 
     private void onAdd() {
         String type = chShape.getSelectedItem();
@@ -131,7 +189,9 @@ public class Start extends Frame {
         }
         shapes.remove(idx);
         refreshList();
+        canvas.repaint(); // odświeżenie panelu po usunięciu figury
     }
+
 
     private void onInfo() {
         int idx = listFig.getSelectedIndex();
